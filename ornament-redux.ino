@@ -6,7 +6,7 @@
 #define FONA_RI 7
 
 // declare the pattern which will be changed based on SMS state.
-char pattern = "p1";
+int pattern = 0;
 
 // large reply buffer
 char replybuffer[255];
@@ -51,82 +51,66 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  // flush input
-//  flushSerial();
-//  while (! Serial.available() ) {
-//    if (fona.available()) {
-//      Serial.write(fona.read());
-//    }
-//  }
-//  flushSerial();
-  checkMessages();
-//  playPattern(pattern);
-  digitalWrite(13, HIGH);
-  delay(100);
-  digitalWrite(13, LOW);
-  delay(500);
-  digitalWrite(13, HIGH);
-  delay(100);
-  digitalWrite(13, LOW);
-  delay(500);
-  
+  checkMessages(&pattern);
+  delay(300);
+  Serial.println(pattern);
+  playPattern(pattern);
 }
 
 
-void checkMessages() {
-    
-    Serial.print(F("Read #"));
-    uint8_t smsn = 1;
-    Serial.print(F("\n\rReading SMS #")); Serial.println(smsn);
-  
-    // Retrieve SMS sender address/phone number.
-    if (! fona.getSMSSender(smsn, replybuffer, 250)) {
-      Serial.println("Failed!");
-
-    }
-    Serial.print(F("FROM: ")); Serial.println(replybuffer);
-  
-    // Retrieve SMS value.
+void checkMessages(int *pattern) {
+    // get number of SMSs
+    int8_t smsnum = fona.getNumSMS();
     uint16_t smslen;
-    if (! fona.readSMS(smsn, replybuffer, 250, &smslen)) { // pass in buffer and max len!
-      Serial.println("Failed!");
-  
-    }
-    Serial.print(F("***** SMS #")); Serial.print(smsn);
-    Serial.print(" ("); Serial.print(smslen); Serial.println(F(") bytes *****"));
-    Serial.println(replybuffer);
-    Serial.println(F("*****"));
-
-  
-
-//    replybuffer.trim();
-
-    if((replybuffer == "off") || (replybuffer == "on")) {
-      pattern = replybuffer;
-    } else if ((replybuffer == "p1") || (replybuffer == "p2")) {
-      pattern = replybuffer;
-    } else if (replybuffer == "p3") {
-      pattern = replybuffer;
-    } else if (replybuffer == "menu") {
-      fona.sendSMS(smsn, "on, off, p1, p2, p3, menu");
+    
+    if (smsnum == 0) {
+      Serial.println("No messages");
+      
     } else {
-      fona.sendSMS(smsn, "Sorry, unknown command");
+      
+      Serial.println("Some messages");
+      
+      for(int i = 1; i <= smsnum; i++) {
+        // read the message(s)
+        Serial.print(F("Reading message # ")); Serial.println(i);
+         if (!fona.readSMS(i, replybuffer, 250, &smslen)) {  // pass in buffer and max len!
+            Serial.println(F("Failed!"));
+            break;
+          } else {
+            // print out the contents of the message
+            Serial.println(replybuffer);
+          }
+
+          // This is what I was working on on 1/9. Trying to flip a switch on & off
+          
+          if(replybuffer == "off") {
+            pattern = 0;
+          } else if (replybuffer == "on") {
+            Serial.println(F("This print statement is never getting accessed."));
+            pattern = 1;
+          } 
+
+          // print sender info
+          if (! fona.getSMSSender(i, replybuffer, 250)) {
+            Serial.println("Failed!");
+            break;
+          }
+          Serial.print(F("FROM: ")); Serial.println(replybuffer);
+          
+          if (fona.deleteSMS(i)) {
+            Serial.println(F("Deleted "));
+          } else {
+            Serial.println(F("Couldn't delete"));
+          }
+      }
+
+
+      // Retrieve SMS sender address/phone number.
+      Serial.print(F("FROM: ")); Serial.println(replybuffer);
     }
 }
 
 
-void playPattern(char pattern) {
-  switch (pattern) {
-    case 'p1':
-      flashSlow();
-      break; 
-    case 'p2':
-      flashFast();
-      break;
-    default: 
-      break;
-  }
-}
 
 
 void flushSerial() {
@@ -153,6 +137,18 @@ uint16_t readnumber() {
     x += c - '0';
   }
   return x;
+}
+
+void playPattern (int pattern) {
+  Serial.print(F("Pattern number ")); Serial.println(pattern);
+  switch(pattern) {
+    case 1: 
+      flashSlow();
+      break;
+    case 0:
+      flashFast();
+      break;
+  }
 }
 
 uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
@@ -194,23 +190,35 @@ uint8_t readline(char *buff, uint8_t maxbuff, uint16_t timeout) {
   return buffidx;
 }
 
-
 void flashFast() {
   digitalWrite(13, HIGH);
   delay(100);
   digitalWrite(13, LOW);
-  delay(500);
+  delay(300);
   digitalWrite(13, HIGH);
   delay(100);
   digitalWrite(13, LOW);
-  delay(500);
+  delay(300);
+  digitalWrite(13, HIGH);
+  delay(100);
+  digitalWrite(13, LOW);
+  delay(300);
 }
 
 void flashSlow() {
   digitalWrite(13, HIGH);
-  delay(1000);
+  delay(10);
+  digitalWrite(13, LOW);
+  delay(500);
+  digitalWrite(13, HIGH);
+  delay(10);
+  digitalWrite(13, LOW);
+  delay(500);
+  digitalWrite(13, HIGH);
+  delay(10);
   digitalWrite(13, LOW);
   delay(500);
 }
+
 
 
