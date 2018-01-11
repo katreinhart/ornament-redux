@@ -6,7 +6,7 @@
 #define FONA_RI 7
 
 // declare the pattern which will be changed based on SMS state.
-int pattern = 0;
+char pattern = "p1";
 
 // large reply buffer
 char replybuffer[255];
@@ -44,8 +44,18 @@ void setup() {
   }
   type = fona.type();
   fona.setGPRSNetworkSettings(F("wireless.twilio.com"));
-
   pinMode(13, OUTPUT);
+
+  // testing stuff here
+
+  char thing1[8] = "hello";
+  char thing2[8] = "hello";
+
+  if(thing1 == thing2) {
+    Serial.println(F("Things are teh same"));
+  } else {
+    Serial.println(F("Things are not the same"));
+  }
 
 }
 
@@ -58,7 +68,7 @@ void loop() {
 }
 
 
-void checkMessages(int *pattern) {
+void checkMessages(char *pattern) {
     // get number of SMSs
     int8_t smsnum = fona.getNumSMS();
     uint16_t smslen;
@@ -83,12 +93,22 @@ void checkMessages(int *pattern) {
 
           // This is what I was working on on 1/9. Trying to flip a switch on & off
           
-          if(replybuffer == "off") {
-            pattern = 0;
-          } else if (replybuffer == "on") {
-            Serial.println(F("This print statement is never getting accessed."));
-            pattern = 1;
-          } 
+//          if(replybuffer == off) {
+//            Serial.println(F("Did this print statement ever get accessed?"));
+//            pattern = 0;
+//          } else if (replybuffer == on) {
+//            Serial.println(F("This print statement is never getting accessed."));
+//            pattern = 1;
+//          } 
+          // This is what was in the presentation.
+//          string.trim(replybuffer);
+//          switch(replybuffer) {
+//            case 'p1': case 'on': case 'off':
+//              pattern = replybuffer;
+//              break;
+//            default:
+//              break;
+//          }
 
           // print sender info
           if (! fona.getSMSSender(i, replybuffer, 250)) {
@@ -207,15 +227,15 @@ void flashFast() {
 
 void flashSlow() {
   digitalWrite(13, HIGH);
-  delay(10);
+  delay(100);
   digitalWrite(13, LOW);
-  delay(500);
+  delay(5000);
   digitalWrite(13, HIGH);
-  delay(10);
+  delay(100);
   digitalWrite(13, LOW);
-  delay(500);
+  delay(5000);
   digitalWrite(13, HIGH);
-  delay(10);
+  delay(100);
   digitalWrite(13, LOW);
   delay(500);
 }
